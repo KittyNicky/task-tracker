@@ -131,5 +131,5 @@ TOKEN_KEY=<JWT Access token>
 cd task-tracker
 docker compose -f compose.yaml -p task-tracker up -d
 ```
-После создания и запуска контейнеров будет запущено 6 контейнеров 
-![img.png](img.png)
+
+После создания и запуска контейнеров будет запущено 6 контейнеров
