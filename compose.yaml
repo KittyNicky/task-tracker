@@ -1,0 +1,105 @@
+version: '3.9'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    restart: on-failure
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+
+  broker:
+    image: confluentinc/cp-kafka:latest
+    container_name: broker
+    restart: on-failure
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  database:
+    image: postgres:16
+    container_name: database
+    restart: on-failure
+    env_file: .env
+    command: [ "postgres",
+               "-c", "listen_addresses=*",
+               "-c", "max_connections=100",
+               "-c", "shared_buffers=1GB",
+               "-c", "effective_cache_size=3GB",
+               "-c", "maintenance_work_mem=256MB",
+               "-c", "checkpoint_completion_target=0.9",
+               "-c", "wal_buffers=16MB",
+               "-c", "default_statistics_target=100",
+               "-c", "random_page_cost=1.1",
+               "-c", "effective_io_concurrency=200",
+               "-c", "work_mem=5242kB",
+               "-c", "huge_pages=off",
+               "-c", "min_wal_size=1GB",
+               "-c", "max_wal_size=4GB",
+               "-c", "max_worker_processes=4",
+               "-c", "max_parallel_workers_per_gather=2",
+               "-c", "max_parallel_workers=4",
+               "-c", "max_parallel_maintenance_workers=2" ]
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: task_tracker
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/task_tracker
+    volumes:
+      - data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U task_tracker_service -d task_tracker" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    image: kittynicky/task-tracker-backend:latest
+    container_name: backend
+    restart: on-failure
+    env_file: .env
+    depends_on:
+      - database
+      - broker
+    ports:
+      - "8080:8080"
+
+  email-sender:
+    image: kittynicky/task-tracker-email-sender:latest
+    container_name: email-sender
+    restart: on-failure
+    env_file: .env
+    depends_on:
+      - broker
+
+  scheduler:
+    image: kittynicky/task-tracker-scheduler:latest
+    container_name: scheduler
+    restart: on-failure
+    env_file: .env
+    depends_on:
+      - database
+      - broker
+
+volumes:
+  data:
