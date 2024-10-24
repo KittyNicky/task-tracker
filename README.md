@@ -109,7 +109,7 @@ Docker.
 ## Деплой
 
 - Установить [Docker](#https://docs.docker.com/get-docker/) и [Git](#https://git-scm.com/downloads) на сервере
-- Клонировать репозиторий [task-tracker](#):
+- Клонировать репозиторий проекта task-tracker:
 
 ```shell
 git clone https://github.com/KittyNicky/task-tracker.git
