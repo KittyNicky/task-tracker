@@ -122,7 +122,7 @@ EMAIL_USERNAME=<email пользователя, от которого будут
 EMAIL_PASSWORD=<пароль email пользователя/сгенерированный пароль приложения>
 DB_USERNAME=<Имя пользователя базы данных>
 DB_PASSWORD=<Пароль пользователя базы данных>
-TOKEN_KEY=<JWT Access token>
+SECRET_KEY=<JWT Access token>
 ```
 
 - Запустить docker compose
